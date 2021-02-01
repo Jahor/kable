@@ -8,6 +8,15 @@ plugins {
     id("com.vanniktech.maven.publish")
 }
 
+/* ```
+ *   common
+ *   |-- js
+ *   |-- android
+ *   '-- apple
+ *       |-- ios
+ *       '-- macos
+ * ```
+ */
 kotlin {
     explicitApi()
 
@@ -22,8 +31,14 @@ kotlin {
     sourceSets {
         val commonMain by getting {
             dependencies {
-                api(coroutines("core", version = "1.5.0-native-mt"))
+                api(coroutines("core"))
                 api(uuid())
+            }
+        }
+
+        val commonTest by getting {
+            dependencies {
+                implementation(kotlin("test"))
             }
         }
 
@@ -41,25 +56,32 @@ kotlin {
             }
         }
 
-        val macosX64Main by getting {
+        val appleMain by creating {
+            dependsOn(commonMain)
             dependencies {
-                api(coroutines("core", version = "1.5.0-native-mt!!"))
-                implementation(stately("isolate-macosx64"))
+                implementation(coroutines("core", version = "1.5.0-native-mt")) {
+                    isForce = true
+                }
+                implementation(stately("isolate"))
             }
+        }
+
+        val appleTest by creating
+
+        val macosX64Main by getting {
+            dependsOn(appleMain)
+        }
+
+        val macosX64Test by getting {
+            dependsOn(appleTest)
         }
 
         val iosX64Main by getting {
-            dependencies {
-                api(coroutines("core", version = "1.5.0-native-mt!!"))
-                implementation(stately("isolate-iosx64"))
-            }
+            dependsOn(appleMain)
         }
 
         val iosArm64Main by getting {
-            dependencies {
-                api(coroutines("core", version = "1.5.0-native-mt!!"))
-                implementation(stately("isolate-iosarm64"))
-            }
+            dependsOn(appleMain)
         }
 
         all {
